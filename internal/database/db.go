@@ -273,7 +273,7 @@ func (s *service) UpdateNameDescription(ctx context.Context,
 }
 
 func (s *service) UpdateName(
-	tx context.Context,
+	ctx context.Context,
 	workspaceId primitive.ObjectID,
 	name string,
 	userId string) error {
