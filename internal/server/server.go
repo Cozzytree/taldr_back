@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	SAVE_INTERVAL = 15
+	SAVE_INTERVAL = 5
 )
 
 type Server struct {

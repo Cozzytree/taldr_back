@@ -35,26 +35,18 @@ func (s *ShapeStore) storeShapes(id string, shapes []models.Shape) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if v, ok := s.store[id]; ok {
-		v.Shapes = shapes
-	} else {
-		s.store[id] = SandDoc{
-			Shapes: shapes,
-		}
+	s.store[id] = SandDoc{
+		Shapes: shapes,
 	}
+
 }
 
 func (s *ShapeStore) saveDocument(id string, document string) {
-
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if v, ok := s.docStore[id]; ok {
-		v.Document = document
-	} else {
-		s.docStore[id] = SandDoc{
-			Document: document,
-		}
+	s.docStore[id] = SandDoc{
+		Document: document,
 	}
 }
 

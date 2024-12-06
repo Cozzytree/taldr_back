@@ -24,6 +24,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("GET /workspace_data/{workspace_id}", s.getWorkSpaceData())
 	mux.HandleFunc("GET /ws", s.WsConnect)
 	mux.HandleFunc("DELETE /delete_workspace/{workspace_id}/{user_id}", s.deleteWorkspce())
+	mux.HandleFunc("PATCH /update_name/", s.updateWorkspaceName())
+	mux.HandleFunc("PATCH /update_description/", s.updateWorkspaceDescription())
 
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		h := s.db.Health()
@@ -45,7 +47,7 @@ func (s *Server) corsMiddlwware(next http.Handler) http.Handler {
 		w.Header().
 			Set("Access-Control-Allow-Credentials", "false") // Set to "true" if credentials are required
 
-			// If it's a preflight (OPTIONS) request, return a 200 OK response immediately
+		// If it's a preflight (OPTIONS) request, return a 200 OK response immediately
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
 			return
@@ -206,5 +208,61 @@ func (s *Server) deleteWorkspace() http.HandlerFunc {
 		}
 
 		w.Write([]byte("successfully deleted"))
+	}
+}
+
+func (s *Server) updateWorkspaceName() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		input := struct {
+			Name        string `json:"name"`
+			UserId      string `json:"userId"`
+			WorkspaceId string `json:"workspaceId"`
+		}{}
+
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+
+		id, err := primitive.ObjectIDFromHex(input.WorkspaceId)
+		if err != nil {
+			http.Error(w, "invalid object id", http.StatusBadRequest)
+			return
+		}
+
+		err = s.db.UpdateName(r.Context(), id, input.Name, input.UserId)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Write([]byte("name successfully updated"))
+	}
+}
+
+func (s *Server) updateWorkspaceDescription() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		input := struct {
+			Description string `json:"description"`
+			UserId      string `json:"userId"`
+			WorkspaceId string `json:"workspaceId"`
+		}{}
+
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+
+		id, err := primitive.ObjectIDFromHex(input.WorkspaceId)
+		if err != nil {
+			http.Error(w, "invalid object id", http.StatusBadRequest)
+			return
+		}
+
+		err = s.db.UpdateDescription(r.Context(), id, input.Description, input.UserId)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Write([]byte("description successfully updated"))
 	}
 }

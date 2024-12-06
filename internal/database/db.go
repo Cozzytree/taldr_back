@@ -34,6 +34,12 @@ type Service interface {
 		userId string,
 		description string,
 		name string) error
+	UpdateDescription(
+		ctx context.Context,
+		workspaceId primitive.ObjectID,
+		description string,
+		userId string) error
+	UpdateName(ctx context.Context, workspaceId primitive.ObjectID, name string, userId string) error
 }
 
 type service struct {
@@ -177,7 +183,9 @@ func (s *service) UserWorkspaces(ctx context.Context,
 	return works, nil
 }
 
-func (s *service) GetWorkspaceData(ctx context.Context, workspaceId primitive.ObjectID) (*models.Workspace, error) {
+func (s *service) GetWorkspaceData(
+	ctx context.Context,
+	workspaceId primitive.ObjectID) (*models.Workspace, error) {
 	// FindOne will return an error if no document is found, or other database issues.
 	res := s.db.Database("taldr").
 		Collection("workspaces").
@@ -203,7 +211,10 @@ func (s *service) GetWorkspaceData(ctx context.Context, workspaceId primitive.Ob
 	return &data, nil
 }
 
-func (s *service) DeleteWorkspace(ctx context.Context, workspaceId primitive.ObjectID, userId string) error {
+func (s *service) DeleteWorkspace(
+	ctx context.Context,
+	workspaceId primitive.ObjectID,
+	userId string) error {
 	conn := s.db.Database("taldr").Collection("workspaces")
 
 	res := conn.FindOne(ctx, bson.M{"_id": workspaceId})
@@ -258,5 +269,64 @@ func (s *service) UpdateNameDescription(ctx context.Context,
 	if res.Err() != nil {
 		return errors.New("err : %v" + res.Err().Error())
 	}
+	return nil
+}
+
+func (s *service) UpdateName(
+	tx context.Context,
+	workspaceId primitive.ObjectID,
+	name string,
+	userId string) error {
+	conn := s.db.Database("taldr").Collection("workspaces")
+
+	exist := conn.FindOne(ctx, bson.M{"_id": workspaceId})
+	if exist.Err() != nil {
+		return exist.Err()
+	}
+
+	var workspace models.Workspace
+	if err := exist.Decode(&workspace); err != nil {
+		return errors.New("internal server error")
+	}
+
+	if workspace.UserId != userId {
+		return errors.New("unauthorized")
+	}
+
+	updateRes := conn.FindOneAndUpdate(ctx, bson.M{"_id": workspaceId}, bson.M{"$set": bson.M{"name": name}})
+	if updateRes.Err() != nil {
+		return updateRes.Err()
+	}
+
+	return nil
+}
+
+func (s *service) UpdateDescription(
+	ctx context.Context,
+	workspaceId primitive.ObjectID,
+	description string,
+	userId string) error {
+	conn := s.db.Database("taldr").Collection("workspaces")
+
+	exist := conn.FindOne(ctx, bson.M{"_id": workspaceId})
+	if exist.Err() != nil {
+		return exist.Err()
+	}
+
+	var workspace models.Workspace
+	if err := exist.Decode(&workspace); err != nil {
+		return errors.New("internal server error")
+	}
+
+	if workspace.UserId != userId {
+		return errors.New("unauthorized")
+	}
+
+	updateRes := conn.
+		FindOneAndUpdate(ctx, bson.M{"_id": workspaceId}, bson.M{"$set": bson.M{"description": description}})
+	if updateRes.Err() != nil {
+		return updateRes.Err()
+	}
+
 	return nil
 }

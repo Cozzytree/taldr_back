@@ -50,6 +50,7 @@ func (s *Server) WsConnect(w http.ResponseWriter, r *http.Request) {
 			s.shapeS.
 				saveDocument(fmt.Sprintf("%v+%v", workspaceDetails.Id, workspaceDetails.UserId),
 					workspaceDetails.Document)
+			fmt.Println("document : ", workspaceDetails.Document)
 			break
 		case "canvas":
 			s.shapeS.
